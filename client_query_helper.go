@@ -2,8 +2,6 @@ package bnrsqlx
 
 import (
 	"fmt"
-
-	"github.com/oneononex/oolib/ooerrors"
 )
 
 type SelectQueryBuilder struct {
@@ -17,20 +15,20 @@ type SelectQueryBuilder struct {
 }
 
 // Get query normal select query and return first value found in 'dest' struct
-func (c *defaultClient) Get(dest interface{}, query string, args ...interface{}) ooerrors.Error {
+func (c *defaultClient) Get(dest interface{}, query string, args ...interface{}) error {
 	err := c.db.Get(dest, query, args...)
 	if err != nil {
-		return ooerrors.NewDatabaseError(err)
+		return err
 	}
 	return nil
 }
 
 // Select do select query with select query builder
-func (c *defaultClient) Select(model interface{}, dest interface{}, qb SelectQueryBuilder) ooerrors.Error {
+func (c *defaultClient) Select(model interface{}, dest interface{}, qb SelectQueryBuilder) error {
 
-	tableName, vErr := parseTableName(model)
-	if vErr != nil {
-		return vErr
+	tableName, err := parseTableName(model)
+	if err != nil {
+		return err
 	}
 
 	orderByQuery := ""
@@ -53,42 +51,42 @@ func (c *defaultClient) Select(model interface{}, dest interface{}, qb SelectQue
 	}
 
 	query := fmt.Sprintf("select %v from %v%v%v%v", qb.SelectQuery, tableName, whereQuery, orderByQuery, limitQuery)
-	err := c.db.Select(dest, query, qb.Args...)
+	err = c.db.Select(dest, query, qb.Args...)
 	if err != nil {
-		return ooerrors.NewDatabaseError(err)
+		return err
 	}
 
 	return nil
 }
 
 // Count count all data in database with where clause
-func (c *defaultClient) Count(model interface{}, whereQuery string, args []interface{}) (int64, ooerrors.Error) {
+func (c *defaultClient) Count(model interface{}, whereQuery string, args []interface{}) (int64, error) {
 
 	if whereQuery != "" {
 		whereQuery = fmt.Sprintf(" where %v", whereQuery)
 	}
 
-	tableName, vErr := parseTableName(model)
-	if vErr != nil {
-		return 0, vErr
+	tableName, err := parseTableName(model)
+	if err != nil {
+		return 0, err
 	}
 
 	var count int64
 	query := fmt.Sprintf("select count(*) as count from %v%v", tableName, whereQuery)
 	rows, err := c.db.Query(query, args...)
 	if err != nil {
-		return 0, ooerrors.NewDatabaseError(err)
+		return 0, err
 	}
 	for rows.Next() {
 		if err := rows.Scan(&count); err != nil {
-			return 0, ooerrors.NewDatabaseError(err)
+			return 0, err
 		}
 	}
 
 	return count, nil
 }
 
-func (c *defaultClient) SelectWithCount(model interface{}, dest interface{}, qb SelectQueryBuilder, pagination *PaginationRequest) (int64, ooerrors.Error) {
+func (c *defaultClient) SelectWithCount(model interface{}, dest interface{}, qb SelectQueryBuilder, pagination *PaginationRequest) (int64, error) {
 
 	if qb.HasDeletedAt {
 		if qb.WhereQuery != "" {
@@ -97,9 +95,9 @@ func (c *defaultClient) SelectWithCount(model interface{}, dest interface{}, qb 
 		qb.WhereQuery = fmt.Sprintf("%v deleted_at is null", qb.WhereQuery)
 	}
 
-	count, vErr := c.Count(model, qb.WhereQuery, qb.Args)
-	if vErr != nil {
-		return 0, vErr
+	count, err := c.Count(model, qb.WhereQuery, qb.Args)
+	if err != nil {
+		return 0, err
 	}
 
 	// if len(values) == 2 && values[0] != 0 && values[1] != 0 {
@@ -115,9 +113,9 @@ func (c *defaultClient) SelectWithCount(model interface{}, dest interface{}, qb 
 		}
 	}
 
-	vErr = c.Select(model, dest, qb)
-	if vErr != nil {
-		return 0, vErr
+	err = c.Select(model, dest, qb)
+	if err != nil {
+		return 0, err
 	}
 
 	return count, nil

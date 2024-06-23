@@ -2,7 +2,6 @@ package bnrsqlx
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/oneononex/oolib/ooerrors"
 )
 
 type Client interface {
@@ -13,13 +12,13 @@ type Client interface {
 
 	NewUpdateHelper() *UpdateHelper
 
-	DeleteExec(arg interface{}, whereQuery string, values ...interface{}) ooerrors.Error
+	DeleteExec(arg interface{}, whereQuery string, values ...interface{}) error
 
-	Get(dest interface{}, query string, args ...interface{}) ooerrors.Error
-	Select(model interface{}, dest interface{}, qb SelectQueryBuilder) ooerrors.Error
-	SelectOne(dest interface{}, qb SelectOneQueryBuilder) ooerrors.Error
-	Count(model interface{}, whereQuery string, args []interface{}) (int64, ooerrors.Error)
-	SelectWithCount(model interface{}, dest interface{}, qb SelectQueryBuilder, pagination *PaginationRequest) (int64, ooerrors.Error)
+	Get(dest interface{}, query string, args ...interface{}) error
+	Select(model interface{}, dest interface{}, qb SelectQueryBuilder) error
+	SelectOne(dest interface{}, qb SelectOneQueryBuilder) error
+	Count(model interface{}, whereQuery string, args []interface{}) (int64, error)
+	SelectWithCount(model interface{}, dest interface{}, qb SelectQueryBuilder, pagination *PaginationRequest) (int64, error)
 
 	Close() error
 }

@@ -2,8 +2,6 @@ package bnrsqlx
 
 import (
 	"fmt"
-
-	"github.com/oneononex/oolib/ooerrors"
 )
 
 type SelectOneQueryBuilder struct {
@@ -14,7 +12,7 @@ type SelectOneQueryBuilder struct {
 	HasDeletedAt bool          `json:"has_deleted_at"`
 }
 
-func (c *defaultClient) SelectOne(dest interface{}, qb SelectOneQueryBuilder) ooerrors.Error {
+func (c *defaultClient) SelectOne(dest interface{}, qb SelectOneQueryBuilder) error {
 
 	tableName, vErr := parseTableName(dest)
 	if vErr != nil {
@@ -44,7 +42,7 @@ func (c *defaultClient) SelectOne(dest interface{}, qb SelectOneQueryBuilder) oo
 
 	err := c.db.Get(dest, query, qb.Args...)
 	if err != nil {
-		return ooerrors.NewDatabaseError(err)
+		return err
 	}
 
 	return nil

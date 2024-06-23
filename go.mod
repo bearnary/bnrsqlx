@@ -5,8 +5,8 @@ go 1.21.4
 require (
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/kazekim/kzklogger v1.0.1
 	github.com/lib/pq v1.10.9
-	github.com/oneononex/oolib v1.6.95
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.25.10
 )

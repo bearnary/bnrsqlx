@@ -1,9 +1,8 @@
 package bnrsqlx
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/oneononex/oolib/ooerrors"
 )
 
 type UpdateHelper struct {
@@ -29,7 +28,7 @@ func (h *UpdateHelper) SetParam(key string, value interface{}) {
 	h.params[key] = value
 }
 
-func (h *UpdateHelper) CommitUpdateQuery(tableName string) ooerrors.Error {
+func (h *UpdateHelper) CommitUpdateQuery(tableName string) error {
 
 	h.paramCount = 1
 	var args []interface{}
@@ -67,17 +66,17 @@ func (h *UpdateHelper) CommitUpdateQuery(tableName string) ooerrors.Error {
 			args = append(args, v)
 		}
 	} else {
-		return ooerrors.ErrNoWhereClauseInDatabaseQuery
+		return errors.New("no where clause in database query")
 	}
 
 	query := fmt.Sprintf("update %v set %v where %v", tableName, updateQuery, whereQuery)
 	res, err := h.db.DB().Exec(query, args...)
 	if err != nil {
-		return ooerrors.NewDatabaseError(err)
+		return err
 	}
 	_, err = res.RowsAffected()
 	if err != nil {
-		return ooerrors.NewDatabaseError(err)
+		return err
 	}
 	return nil
 }

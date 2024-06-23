@@ -3,12 +3,12 @@ package bnrdbmigrator
 import (
 	"time"
 
-	"github.com/oneononex/oolib/logger"
+	"github.com/kazekim/kzklogger"
 	"gorm.io/gorm"
 )
 
 func (c *defaultClient) MigrateDB(revisions []MigrationRevision) error {
-	log := logger.New("AutoMigration")
+	log := kzklogger.New("AutoMigration")
 	log.Info("start")
 	defer func() {
 		log.Info("completed")
