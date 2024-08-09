@@ -17,6 +17,7 @@ type Client interface {
 	Get(dest interface{}, query string, args ...interface{}) error
 	Select(model interface{}, dest interface{}, qb SelectQueryBuilder) error
 	SelectOne(dest interface{}, qb SelectOneQueryBuilder) error
+	SelectJoins(model interface{}, dest interface{}, qb SelectQueryBuilder) error
 	Count(model interface{}, whereQuery string, args []interface{}) (int64, error)
 	SelectWithCount(model interface{}, dest interface{}, qb SelectQueryBuilder, pagination *PaginationRequest) (int64, error)
 

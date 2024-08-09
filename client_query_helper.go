@@ -2,16 +2,45 @@ package bnrsqlx
 
 import (
 	"fmt"
+	"strings"
 )
 
 type SelectQueryBuilder struct {
-	SelectQuery  string        `json:"select_query"`
-	WhereQuery   string        `json:"where_query"`
-	OrderByQuery *string       `json:"order_by_query"`
-	Limit        *int64        `json:"limit"`
-	Page         *int64        `json:"page"`
-	Args         []interface{} `json:"args"`
-	HasDeletedAt bool          `json:"has_deleted_at"`
+	SelectQuery  string         `json:"select_query"`
+	WhereQuery   string         `json:"where_query"`
+	OrderByQuery *string        `json:"order_by_query"`
+	Limit        *int64         `json:"limit"`
+	Page         *int64         `json:"page"`
+	Args         []interface{}  `json:"args"`
+	HasDeletedAt bool           `json:"has_deleted_at"`
+	JoinBuilders *[]JoinBuilder `json:"join_builders"`
+}
+
+type JoinBuilder struct {
+	joinType  string
+	tableName string
+	onClause  string
+}
+
+func NewJoinBuilder(joinType string, tableName string, onClause string) *JoinBuilder {
+	return &JoinBuilder{
+		joinType:  joinType,
+		tableName: tableName,
+		onClause:  onClause,
+	}
+}
+
+func (jb *JoinBuilder) ToSQL() string {
+	return fmt.Sprintf("%s JOIN %s ON %s", jb.joinType, jb.tableName, jb.onClause)
+}
+
+func (qb *SelectQueryBuilder) BuildJoinQuery() string {
+	joinQueries := []string{}
+	for _, jb := range *qb.JoinBuilders {
+		joinQueries = append(joinQueries, jb.ToSQL())
+	}
+
+	return strings.Join(joinQueries, " ")
 }
 
 // Get query normal select query and return first value found in 'dest' struct
@@ -119,4 +148,45 @@ func (c *defaultClient) SelectWithCount(model interface{}, dest interface{}, qb 
 	}
 
 	return count, nil
+}
+
+func (c *defaultClient) SelectJoins(model interface{}, dest interface{}, qb SelectQueryBuilder) error {
+	tableName, err := parseTableName(model)
+	if err != nil {
+		return err
+	}
+
+	// Construct the JOIN clause
+	joinQuery := ""
+	if qb.JoinBuilders != nil {
+		joinQuery = qb.BuildJoinQuery()
+	}
+
+	// Construct the ORDER BY clause
+	orderByQuery := ""
+	if qb.OrderByQuery != nil {
+		orderByQuery = fmt.Sprintf(" order by %v", *qb.OrderByQuery)
+	}
+
+	limitQuery := ""
+	if qb.Page != nil && qb.Limit != nil {
+		limit := *qb.Limit
+		offset := (*qb.Page - 1) * *qb.Limit
+		limitQuery = fmt.Sprintf(" limit %v offset %v", limit, offset)
+	} else if qb.Limit != nil {
+		limitQuery = fmt.Sprintf(" limit %v", *qb.Limit)
+	}
+
+	whereQuery := ""
+	if qb.WhereQuery != "" {
+		whereQuery = fmt.Sprintf(" where %v", qb.WhereQuery)
+	}
+
+	query := fmt.Sprintf("select %v from %v%v%v%v%v", qb.SelectQuery, tableName, joinQuery, whereQuery, orderByQuery, limitQuery)
+	err = c.db.Select(dest, query, qb.Args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
